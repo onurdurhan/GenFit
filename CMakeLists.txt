@@ -62,12 +62,19 @@ ELSE()
 ENDIF()
 
 IF(DEFINED RAVE)
-	# turn comma separated lists into space separated strings
+
+	find_package(Boost REQUIRED)
+	include_directories( ${Boost_INCLUDE_DIRS} )
+	MESSAGE(STATUS "FOUND Rave_LDFLAGS=${Rave_LDFLAGS}")
+	MESSAGE(STATUS "FOUND Rave_INCLUDE_DIRS=${Rave_INCLUDE_DIRS}")
+	MESSAGE(STATUS "FOUND Rave_CFLAGS=${Rave_CFLAGS}")
+	# turn semicolon separated lists into space separated strings
 	string (REPLACE ";" " " Rave_LDFLAGS_STR "${Rave_LDFLAGS}")
 	string (REPLACE ";" " " Rave_INCLUDE_DIRS_STR "${Rave_INCLUDE_DIRS}")
 	string (REPLACE ";" " " Rave_CFLAGS_STR "${Rave_CFLAGS}")
 
-	SET (CMAKE_CXX_FLAGS ${Rave_DEFINITIONS} ${Rave_CFLAGS_STR})
+	SET (CMAKE_CXX_FLAGS "${Rave_DEFINITIONS} ${Rave_CFLAGS_STR}") # quote to avoid semicolon
+	MESSAGE(STATUS "CMAKE_CXX_FLAGS afer RAVE=${CMAKE_CXX_FLAGS}")
 	SET(GF_INC_DIRS
 		./GFRave/include/ ${Rave_INCLUDE_DIRS_STR}
 	)
