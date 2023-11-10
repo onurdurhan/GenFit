@@ -161,7 +161,9 @@ int main() {
         for (unsigned int i=1; i<measurementTypes.size(); ++i){
           std::vector<genfit::AbsMeasurement*> measurements = measurementCreator.create(measurementTypes[i], i*5.);
           trackPtr->insertPoint(new genfit::TrackPoint(measurements, trackPtr));
+
         }
+        trackPtr->checkConsistency();// check throws exception on failure
       }
       catch(genfit::Exception& e){
         std::cerr<<"Exception, next track"<<std::endl;
@@ -169,21 +171,16 @@ int main() {
         continue; // here is a memleak!
       }
 
-      //check
-      assert(trackPtr->checkConsistency());
-
       // do the fit
       try{
         fitter->processTrack(trackPtr);
+        trackPtr->checkConsistency(); // check throws exception on failure
       }
       catch(genfit::Exception& e){
         std::cerr << e.what();
         std::cerr << "Exception, next track" << std::endl;
         continue;
       }
-
-      //check
-      assert(trackPtr->checkConsistency());
 
     } // end loop over tracks
 
