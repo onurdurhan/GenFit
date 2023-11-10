@@ -76,23 +76,23 @@ IF(DEFINED RAVE)
 	SET (CMAKE_CXX_FLAGS "${Rave_DEFINITIONS} ${Rave_CFLAGS_STR}") # quote to avoid semicolon
 	MESSAGE(STATUS "CMAKE_CXX_FLAGS afer RAVE=${CMAKE_CXX_FLAGS}")
 	SET(GF_INC_DIRS
-		./GFRave/include/ ${Rave_INCLUDE_DIRS_STR}
+		${CMAKE_CURRENT_SOURCE_DIR}/GFRave/include/ ${Rave_INCLUDE_DIRS_STR}
 	)
 	
-	AUX_SOURCE_DIRECTORY( ./GFRave/src  library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/GFRave/src  library_sources )
 ENDIF()
 
 # Set GENFIT include directories
 SET(GF_INC_DIRS
-		./core/include/
-		./eventDisplay/include/
-		./fields/include/
-		./finitePlanes/include/
-		./fitters/include/
-		./GBL/include/
-		./measurements/include/
-		./trackReps/include/
-		./utilities/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/core/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/eventDisplay/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/fields/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/finitePlanes/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/fitters/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/GBL/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/measurements/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/trackReps/include/
+	${CMAKE_CURRENT_SOURCE_DIR}/utilities/include/
 		${GF_INC_DIRS}
 )
 
@@ -357,5 +357,15 @@ IF(BUILD_TESTING)
 	INSTALL(TARGETS gtests DESTINATION bin)
 ENDIF()
 
-# generate and install following configuration files
-#GENERATE_PACKAGE_CONFIGURATION_FILES( genfitConfig.cmake genfitConfigVersion.cmake )
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake
+	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+	PATH_VARS GF_INC_DIRS CMAKE_INSTALL_PREFIX LIBRARY_OUTPUT_DIRECTORY
+  )
+write_basic_package_version_file(
+	${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+  VERSION 2.2.0
+  COMPATIBILITY SameMajorVersion )
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME} )
