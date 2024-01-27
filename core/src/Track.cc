@@ -67,8 +67,8 @@ Track::Track(const TrackCand& trackCand, const MeasurementFactory<AbsMeasurement
 
   // fill cache
   fillPointsWithMeasurement();
-
-  checkConsistency();
+  assert(checkConsistency());
+//  checkConsistency();
 }
 
 void
@@ -122,7 +122,7 @@ Track::Track(const Track& rhs) :
   cardinalRep_(rhs.cardinalRep_), mcTrackId_(rhs.mcTrackId_), timeSeed_(rhs.timeSeed_),
   stateSeed_(rhs.stateSeed_), covSeed_(rhs.covSeed_)
 {
-  rhs.checkConsistency();
+  assert(rhs.checkConsistency());
 
   std::map<const AbsTrackRep*, AbsTrackRep*> oldRepNewRep;
 
@@ -144,7 +144,7 @@ Track::Track(const Track& rhs) :
 
   fillPointsWithMeasurement();
 
-  checkConsistency();
+  assert(checkConsistency());
 }
 
 Track& Track::operator=(Track other) {
@@ -156,7 +156,7 @@ Track& Track::operator=(Track other) {
 
   fillPointsWithMeasurement();
 
-  checkConsistency();
+  assert(checkConsistency());
 
   return *this;
 }
