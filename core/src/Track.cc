@@ -1283,111 +1283,92 @@ void Track::Print(const Option_t* option) const {
 }
 
 
-void Track::checkConsistency() const {
 
-  // cppcheck-suppress unreadVariable
-  bool consistent = true;
-  std::stringstream failures;
+
+bool Track::checkConsistency() const {
+
+  bool retVal(true);
 
   std::map<const AbsTrackRep*, const KalmanFitterInfo*> prevFis;
 
   // check if seed is 6D
   if (stateSeed_.GetNrows() != 6) {
-    failures << "Track::checkConsistency(): stateSeed_ dimension != 6" << std::endl;
-    // cppcheck-suppress unreadVariable
-    consistent = false;
+    std::cerr << "Track::checkConsistency(): stateSeed_ dimension != 6" << std::endl;
+    retVal = false;
   }
 
   if (covSeed_.GetNrows() != 6) {
-    failures << "Track::checkConsistency(): covSeed_ dimension != 6" << std::endl;
-    // cppcheck-suppress unreadVariable
-    consistent = false;
+    std::cerr << "Track::checkConsistency(): covSeed_ dimension != 6" << std::endl;
+    retVal = false;
   }
 
   if (covSeed_.Max() == 0.) {
-    // Nota bene: The consistency is not set to false when this occurs, because it does not break the consistency of
-    // the track. However, when something else fails we keep this as additional error information.
-    failures << "Track::checkConsistency(): Warning: covSeed_ is zero" << std::endl;
-  }
-
-  // check if correct number of fitStatuses
-  if (fitStatuses_.size() != trackReps_.size()) {
-    failures << "Track::checkConsistency(): Number of fitStatuses is != number of TrackReps " << std::endl;
-    // cppcheck-suppress unreadVariable
-    consistent = false;
+    std::cerr << "Track::checkConsistency(): Warning: covSeed_ is zero" << std::endl;
+    //retVal = false;
   }
 
   // check if cardinalRep_ is in range of trackReps_
   if (trackReps_.size() && cardinalRep_ >= trackReps_.size()) {
-    failures << "Track::checkConsistency(): cardinalRep id " << cardinalRep_ << " out of bounds" << std::endl;
-    // cppcheck-suppress unreadVariable
-    consistent = false;
+    std::cerr << "Track::checkConsistency(): cardinalRep id " << cardinalRep_ << " out of bounds" << std::endl;
+    retVal = false;
   }
 
   for (std::vector<AbsTrackRep*>::const_iterator rep = trackReps_.begin(); rep != trackReps_.end(); ++rep) {
-    // check for nullptr
-    if ((*rep) == nullptr) {
-      failures << "Track::checkConsistency(): TrackRep is nullptr" << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
+    // check for NULL
+    if ((*rep) == NULL) {
+      std::cerr << "Track::checkConsistency(): TrackRep is NULL" << std::endl;
+      retVal = false;
     }
 
     // check for valid pdg code
     TParticlePDG* particle = TDatabasePDG::Instance()->GetParticle((*rep)->getPDG());
-    if (particle == nullptr) {
-      failures << "Track::checkConsistency(): TrackRep pdg ID " << (*rep)->getPDG() << " is not valid" << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
+    if (particle == NULL) {
+      std::cerr << "Track::checkConsistency(): TrackRep pdg ID " << (*rep)->getPDG() << " is not valid" << std::endl;
+      retVal = false;
     }
 
-    // check if corresponding FitStatus is there
-    if (fitStatuses_.find(*rep) == fitStatuses_.end() and fitStatuses_.find(*rep)->second != nullptr) {
-      failures << "Track::checkConsistency(): No FitStatus for Rep or FitStatus is nullptr" << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
-    }
   }
 
   // check TrackPoints
   for (std::vector<TrackPoint*>::const_iterator tp = trackPoints_.begin(); tp != trackPoints_.end(); ++tp) {
-    // check for nullptr
-    if ((*tp) == nullptr) {
-      failures << "Track::checkConsistency(): TrackPoint is nullptr" << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
+    // check for NULL
+    if ((*tp) == NULL) {
+      std::cerr << "Track::checkConsistency(): TrackPoint is NULL" << std::endl;
+      retVal = false;
     }
     // check if trackPoint points back to this track
     if ((*tp)->getTrack() != this) {
-      failures << "Track::checkConsistency(): TrackPoint does not point back to this track" << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
+      std::cerr << "Track::checkConsistency(): TrackPoint does not point back to this track" << std::endl;
+      retVal = false;
     }
 
     // check rawMeasurements
     const std::vector<AbsMeasurement*>& rawMeasurements = (*tp)->getRawMeasurements();
     for (std::vector<AbsMeasurement*>::const_iterator m = rawMeasurements.begin(); m != rawMeasurements.end(); ++m) {
-      // check for nullptr
-      if ((*m) == nullptr) {
-        failures << "Track::checkConsistency(): Measurement is nullptr" << std::endl;
-	// cppcheck-suppress unreadVariable
-        consistent = false;
+      // check for NULL
+      if ((*m) == NULL) {
+        std::cerr << "Track::checkConsistency(): Measurement is NULL" << std::endl;
+        retVal = false;
       }
       // check if measurement points back to TrackPoint
       if ((*m)->getTrackPoint() != *tp) {
-        failures << "Track::checkConsistency(): Measurement does not point back to correct TrackPoint" << std::endl;
-	// cppcheck-suppress unreadVariable
-        consistent = false;
+        std::cerr << "Track::checkConsistency(): Measurement does not point back to correct TrackPoint" << std::endl;
+        retVal = false;
       }
     }
 
     // check fitterInfos
     std::vector<AbsFitterInfo*> fitterInfos = (*tp)->getFitterInfos();
     for (std::vector<AbsFitterInfo*>::const_iterator fi = fitterInfos.begin(); fi != fitterInfos.end(); ++fi) {
-      // check for nullptr
-      if ((*fi) == nullptr) {
-        failures << "Track::checkConsistency(): FitterInfo is nullptr. TrackPoint: " << *tp << std::endl;
-	// cppcheck-suppress unreadVariable
-        consistent = false;
+      // check for NULL
+      if ((*fi) == NULL) {
+        std::cerr << "Track::checkConsistency(): FitterInfo is NULL. TrackPoint: " << *tp << std::endl;
+        retVal = false;
+      }
+
+      if (!( (*fi)->checkConsistency() ) ) {
+        std::cerr << "Track::checkConsistency(): FitterInfo not consistent. TrackPoint: " << *tp << std::endl;
+        retVal = false;
       }
 
       // check if fitterInfos point to valid TrackReps in trackReps_
@@ -1398,36 +1379,28 @@ void Track::checkConsistency() const {
         }
       }
       if (mycount ==  0) {
-        failures << "Track::checkConsistency(): fitterInfo points to TrackRep which is not in Track" << std::endl;
-	// cppcheck-suppress unreadVariable
-        consistent = false;
+        std::cerr << "Track::checkConsistency(): fitterInfo points to TrackRep which is not in Track" << std::endl;
+        retVal = false;
       }
 
-      if (!( (*fi)->checkConsistency(&(this->getFitStatus((*fi)->getRep())->getPruneFlags())) ) ) {
-        failures << "Track::checkConsistency(): FitterInfo not consistent. TrackPoint: " << *tp << std::endl;
-	// cppcheck-suppress unreadVariable
-        consistent = false;
-      }
-
-      if (dynamic_cast<KalmanFitterInfo*>(*fi) != nullptr) {
-        if (prevFis[(*fi)->getRep()] != nullptr &&
+      if (dynamic_cast<KalmanFitterInfo*>(*fi) != NULL) {
+        if (prevFis[(*fi)->getRep()] != NULL &&
             static_cast<KalmanFitterInfo*>(*fi)->hasReferenceState() &&
             prevFis[(*fi)->getRep()]->hasReferenceState() ) {
           double len = static_cast<KalmanFitterInfo*>(*fi)->getReferenceState()->getForwardSegmentLength();
           double prevLen = prevFis[(*fi)->getRep()]->getReferenceState()->getBackwardSegmentLength();
           if (fabs(prevLen + len) > 1E-10 ) {
-            failures << "Track::checkConsistency(): segment lengths of reference states for rep " << (*fi)->getRep() << " (id " << getIdForRep((*fi)->getRep()) << ") at TrackPoint " << (*tp) << " don't match" << std::endl;
-            failures << prevLen << " + " << len << " = " << prevLen + len << std::endl;
-            failures << "TrackPoint " << *tp << ", FitterInfo " << *fi << ", rep " << getIdForRep((*fi)->getRep()) << std::endl;
-	    // cppcheck-suppress unreadVariable
-            consistent = false;
+            std::cerr << "Track::checkConsistency(): segment lengths of reference states for rep " << (*fi)->getRep() << " (id " << getIdForRep((*fi)->getRep()) << ") at TrackPoint " << (*tp) << " don't match" << std::endl;
+            std::cerr << prevLen << " + " << len << " = " << prevLen + len << std::endl;
+            std::cerr << "TrackPoint " << *tp << ", FitterInfo " << *fi << ", rep " << getIdForRep((*fi)->getRep()) << std::endl;
+            retVal = false;
           }
         }
 
         prevFis[(*fi)->getRep()] = static_cast<KalmanFitterInfo*>(*fi);
       }
       else
-        prevFis[(*fi)->getRep()] = nullptr;
+        prevFis[(*fi)->getRep()] = NULL;
 
     } // end loop over FitterInfos
 
@@ -1444,25 +1417,46 @@ void Track::checkConsistency() const {
   }
 
   if (trackPointsWithMeasurement.size() != trackPointsWithMeasurement_.size()) {
-    failures << "Track::checkConsistency(): trackPointsWithMeasurement_ has incorrect size" << std::endl;
-    // cppcheck-suppress unreadVariable
-    consistent = false;
+    std::cerr << "Track::checkConsistency(): trackPointsWithMeasurement_ has incorrect size" << std::endl;
+    retVal = false;
   }
 
   for (unsigned int i = 0; i < trackPointsWithMeasurement.size(); ++i) {
     if (trackPointsWithMeasurement[i] != trackPointsWithMeasurement_[i]) {
-      failures << "Track::checkConsistency(): trackPointsWithMeasurement_ is not correct" << std::endl;
-      failures << "has         id " << i << ", address " << trackPointsWithMeasurement_[i] << std::endl;
-      failures << "should have id " << i << ", address " << trackPointsWithMeasurement[i] << std::endl;
-      // cppcheck-suppress unreadVariable
-      consistent = false;
+      std::cerr << "Track::checkConsistency(): trackPointsWithMeasurement_ is not correct" << std::endl;
+      std::cerr << "has         id " << i << ", adress " << trackPointsWithMeasurement_[i] << std::endl;
+      std::cerr << "should have id " << i << ", adress " << trackPointsWithMeasurement[i] << std::endl;
+      retVal = false;
     }
   }
 
-  if (not consistent) {
-    throw genfit::Exception(failures.str(), __LINE__, __FILE__);
-  }
+  return retVal;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void Track::trackHasChanged() {
